@@ -1,5 +1,9 @@
 package robot
 
+import (
+	"fmt"
+)
+
 // definitions used in step 1
 
 var Step1Robot struct {
@@ -119,4 +123,139 @@ func robotWillCrash(extent Rect, robot Step2Robot) bool {
 type Step3Robot struct {
 	Name string
 	Step2Robot
+}
+
+type Action3 struct {
+	Command rune
+	Name    string
+}
+
+var validActions = map[rune]bool{
+	'R': true, //turn right
+	'L': true, // turn left
+	'A': true, // advance
+	'D': true, // done
+}
+
+func StartRobot3(name, script string, action chan Action3, log chan string) {
+	for _, command := range script {
+		action <- Action3{command, name}
+	}
+	action <- Action3{'D', name}
+}
+
+func Room3(extent Rect, robots []Step3Robot, action chan Action3, report chan []Step3Robot, log chan string) {
+	defer func() {
+		report <- robots
+	}()
+
+	isValid, msg := isSimValid(extent, robots)
+	if !isValid {
+		log <- msg
+		return
+	}
+
+	terminatedRobots := make(map[string]bool)
+
+	for true {
+		if len(terminatedRobots) == len(robots) {
+			return
+		}
+
+		a := <-action
+
+		if terminatedRobots[a.Name] {
+			continue
+		}
+
+		if !validActions[a.Command] {
+			log <- fmt.Sprintf("invalid action: %v", a)
+			terminatedRobots[a.Name] = true
+			continue
+		}
+
+		var robotToCommand *Step3Robot
+		for i := 0; i < len(robots); i++ {
+			robot := &robots[i]
+			if robot.Name == a.Name {
+				robotToCommand = robot
+			}
+		}
+
+		if robotToCommand == nil {
+			log <- fmt.Sprintf("unknown robot: %s", a.Name)
+			terminatedRobots[a.Name] = true
+			continue
+		}
+
+		switch a.Command {
+		case 'L', 'R':
+			robotToCommand.Turn(Command(a.Command))
+		case 'A':
+			if robotWillCrash(extent, robotToCommand.Step2Robot) {
+				log <- fmt.Sprintf("robot %s about to crash", robotToCommand.Name)
+				continue
+			}
+
+			robotPositions := getRobotPositions(robots)
+			if robotsWillCollide(robotPositions, *robotToCommand) {
+				log <- "robots attempting to advance into another"
+				continue
+			}
+
+			robotToCommand.Advance()
+		case 'D':
+			terminatedRobots[robotToCommand.Name] = true
+		}
+	}
+}
+
+func isSimValid(extent Rect, robots []Step3Robot) (bool, string) {
+	robotNames := make(map[string]bool)
+	for _, r := range robots {
+		if r.Name == "" {
+			return false, "robot with no name"
+		}
+
+		if robotNames[r.Name] {
+			return false, fmt.Sprintf("two robots with name: %s", r.Name)
+		}
+		robotNames[r.Name] = true
+	}
+
+	for _, r := range robots {
+		if isOutOfBounds(extent, r.Pos) {
+			return false, fmt.Sprintf("robot %s is out of bounds", r.Name)
+		}
+	}
+
+	robotPositions := make(map[Pos]bool)
+	for _, r := range robots {
+		if robotPositions[r.Pos] {
+			return false, fmt.Sprintf("two robots at position %v", r.Pos)
+		}
+		robotPositions[r.Pos] = true
+	}
+
+	return true, ""
+}
+
+func getRobotPositions(robots []Step3Robot) map[Pos]bool {
+	robotPositions := make(map[Pos]bool)
+	for _, r := range robots {
+		robotPositions[r.Pos] = true
+	}
+	return robotPositions
+}
+
+func isOutOfBounds(extent Rect, position Pos) bool {
+	return position.Northing < extent.Min.Northing ||
+		position.Northing > extent.Max.Northing ||
+		position.Easting < extent.Min.Easting ||
+		position.Easting > extent.Max.Easting
+}
+
+func robotsWillCollide(robotPositions map[Pos]bool, robot Step3Robot) bool {
+	robot.Advance()
+	return robotPositions[robot.Pos]
 }
