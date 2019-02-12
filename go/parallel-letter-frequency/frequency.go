@@ -17,6 +17,7 @@ func freq(s string, ch chan FreqMap) {
 	ch <- Frequency(s)
 }
 
+// ConcurrentFrequency determines the frequency of characters which appear in a slice of strings
 func ConcurrentFrequency(strings []string) FreqMap {
 	ch := make(chan FreqMap, len(strings))
 
