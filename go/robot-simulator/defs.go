@@ -6,11 +6,13 @@ import (
 
 // definitions used in step 1
 
+// Step1Robot represents a robot with a position and direction
 var Step1Robot struct {
 	X, Y int
 	Dir
 }
 
+// Dir represents a direction
 type Dir int
 
 // var _ fmt.Stringer = Dir(1729)
@@ -19,6 +21,7 @@ func (d Dir) String() string {
 	return string(d)
 }
 
+// Possible directions
 const (
 	N = iota
 	E
@@ -26,6 +29,7 @@ const (
 	W
 )
 
+// Advance moves the Step1Robot one step in its current direction
 func Advance() {
 	switch Step1Robot.Dir {
 	case N:
@@ -39,10 +43,12 @@ func Advance() {
 	}
 }
 
+// Right turns the Step1Robot right
 func Right() {
 	Step1Robot.Dir = (Step1Robot.Dir + 1) % 4
 }
 
+// Left turns the Step1Robot left
 func Left() {
 	Step1Robot.Dir--
 	if Step1Robot.Dir < 0 {
@@ -52,15 +58,25 @@ func Left() {
 
 // additional definitions used in step 2
 
+// Command represents a command to move a robot
 type Command byte // valid values are 'R', 'L', 'A'
+
+// RU represents a distance
 type RU int
+
+// Pos represents a 2 dimensional position
 type Pos struct{ Easting, Northing RU }
+
+// Rect represents a 2 dimensional area
 type Rect struct{ Min, Max Pos }
+
+// Step2Robot represents a robot with direction and position
 type Step2Robot struct {
 	Dir
 	Pos
 }
 
+// Advance moves a robot one step in its current direction
 func (robot *Step2Robot) Advance() {
 	switch robot.Dir {
 	case N:
@@ -74,6 +90,7 @@ func (robot *Step2Robot) Advance() {
 	}
 }
 
+// Turn turns a robot left or right
 func (robot *Step2Robot) Turn(command Command) {
 	switch command {
 	case 'R':
@@ -86,8 +103,10 @@ func (robot *Step2Robot) Turn(command Command) {
 	}
 }
 
+// Action represents the manifestation of a robot command
 type Action Command
 
+// StartRobot starts a robot
 func StartRobot(commands chan Command, actions chan Action) {
 	defer close(actions)
 	for command := range commands {
@@ -95,6 +114,7 @@ func StartRobot(commands chan Command, actions chan Action) {
 	}
 }
 
+// Room controls a simulation of a Step2Robot
 func Room(extent Rect, robot Step2Robot, act chan Action, rep chan Step2Robot) {
 	defer close(rep)
 	for action := range act {
@@ -120,11 +140,13 @@ func robotWillCrash(extent Rect, robot Step2Robot) bool {
 
 // additional definition used in step 3
 
+// Step3Robot represents a robot with a name
 type Step3Robot struct {
 	Name string
 	Step2Robot
 }
 
+// Action3 represents an action for a named robot
 type Action3 struct {
 	Command rune
 	Name    string
@@ -137,6 +159,7 @@ var validActions = map[rune]bool{
 	'D': true, // done
 }
 
+// StartRobot3 starts a robot which executes actions from a script
 func StartRobot3(name, script string, action chan Action3, log chan string) {
 	for _, command := range script {
 		action <- Action3{command, name}
@@ -144,6 +167,7 @@ func StartRobot3(name, script string, action chan Action3, log chan string) {
 	action <- Action3{'D', name}
 }
 
+// Room3 controls a simulation of a Step3Robot
 func Room3(extent Rect, robots []Step3Robot, action chan Action3, report chan []Step3Robot, log chan string) {
 	defer func() {
 		report <- robots
