@@ -20,7 +20,7 @@ func Bracket(s string) bool {
 		_, isOpenBracket := openBrackets[r]
 
 		if isOpenBracket {
-			brackets.push(r)
+			brackets.Push(r)
 			continue
 		}
 
@@ -31,7 +31,7 @@ func Bracket(s string) bool {
 				return false
 			}
 
-			if brackets.pop() != openBracket {
+			if brackets.Pop() != openBracket {
 				return false
 			}
 		}
@@ -43,11 +43,11 @@ func Bracket(s string) bool {
 // Stack is a LIFO list
 type Stack []interface{}
 
-func (s *Stack) push(item interface{}) {
+func (s *Stack) Push(item interface{}) {
 	*s = append(*s, item)
 }
 
-func (s *Stack) pop() interface{} {
+func (s *Stack) Pop() interface{} {
 	lastIndex := len(*s) - 1
 	top := (*s)[lastIndex]
 	*s = (*s)[:lastIndex]
