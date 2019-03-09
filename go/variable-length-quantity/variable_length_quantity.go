@@ -2,6 +2,7 @@ package variablelengthquantity
 
 import "errors"
 
+// DecodeVarint decodes a variable length int
 func DecodeVarint(input []byte) ([]uint32, error) {
 	decoded := []uint32{}
 	var nextVal uint32 = 0
@@ -26,6 +27,7 @@ func DecodeVarint(input []byte) ([]uint32, error) {
 	return decoded, nil
 }
 
+// EncodeVarint encodes a variable length int
 func EncodeVarint(input []uint32) []byte {
 	encoded := []byte{}
 
